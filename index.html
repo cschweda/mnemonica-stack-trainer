@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Mnemonica Stack Trainer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="text/babel">
+      /**
+       * The Mnemonica stack is a predetermined order of playing cards.
+       * This array represents the complete stack with each card's position and value.
+       * @type {Array<{card: string, position: number}>}
+       */
+      const MNEMONICA_STACK = [
+        { card: "4♥", position: 1 },
+        { card: "2♣", position: 2 },
+        { card: "7♦", position: 3 },
+        { card: "3♣", position: 4 },
+        { card: "4♣", position: 5 },
+        { card: "6♦", position: 6 },
+        { card: "A♠", position: 7 },
+        { card: "5♥", position: 8 },
+        { card: "9♠", position: 9 },
+        { card: "2♠", position: 10 },
+        { card: "7♥", position: 11 },
+        { card: "8♥", position: 12 },
+        { card: "Q♣", position: 13 },
+        { card: "7♣", position: 14 },
+        { card: "8♦", position: 15 },
+        { card: "4♦", position: 16 },
+        { card: "K♣", position: 17 },
+        { card: "J♦", position: 18 },
+        { card: "4♠", position: 19 },
+        { card: "2♥", position: 20 },
+        { card: "8♠", position: 21 },
+        { card: "6♠", position: 22 },
+        { card: "3♦", position: 23 },
+        { card: "Q♦", position: 24 },
+        { card: "6♣", position: 25 },
+        { card: "K♦", position: 26 },
+        { card: "5♦", position: 27 },
+        { card: "9♥", position: 28 },
+        { card: "K♥", position: 29 },
+        { card: "J♥", position: 30 },
+        { card: "10♥", position: 31 },
+        { card: "3♥", position: 32 },
+        { card: "8♣", position: 33 },
+        { card: "9♣", position: 34 },
+        { card: "5♣", position: 35 },
+        { card: "2♦", position: 36 },
+        { card: "Q♥", position: 37 },
+        { card: "3♠", position: 38 },
+        { card: "A♣", position: 39 },
+        { card: "6♥", position: 40 },
+        { card: "10♣", position: 41 },
+        { card: "5♠", position: 42 },
+        { card: "K♠", position: 43 },
+        { card: "J♣", position: 44 },
+        { card: "10♦", position: 45 },
+        { card: "Q♠", position: 46 },
+        { card: "A♥", position: 47 },
+        { card: "10♠", position: 48 },
+        { card: "A♦", position: 49 },
+        { card: "J♠", position: 50 },
+        { card: "9♦", position: 51 },
+        { card: "5♠", position: 52 },
+      ];
+
+      /**
+       * Main application component for the Mnemonica Stack Trainer
+       * This component handles all the game logic, state management, and UI rendering
+       * @component
+       */
+      function App() {
+        // Score tracking state
+        /**
+         * @type {[number, function]} correctScore - Tracks number of correct answers
+         * @type {[number, function]} incorrectScore - Tracks number of incorrect answers
+         */
+        const [correctScore, setCorrectScore] = React.useState(0);
+        const [incorrectScore, setIncorrectScore] = React.useState(0);
+
+        /**
+         * @type {[boolean, function]} hasChecked - Prevents multiple check attempts for same card
+         */
+        const [hasChecked, setHasChecked] = React.useState(false);
+
+        /**
+         * @type {[string, function]} mode - Controls game mode: "cardToPosition" or "positionToCard"
+         * @type {[string, function]} deckSize - Controls how many cards are in play (10, 20, 30, 40, or 52)
+         * @type {[object, function]} currentCard - Currently displayed card object
+         * @type {[string, function]} userInput - User's answer input
+         * @type {[string, function]} feedback - Success/failure message
+         * @type {[boolean, function]} showAnswer - Controls answer visibility
+         */
+        const [mode, setMode] = React.useState("cardToPosition");
+        // Change default deck size to 10
+        const [deckSize, setDeckSize] = React.useState("10");
+        const [currentCard, setCurrentCard] = React.useState(null);
+        const [userInput, setUserInput] = React.useState("");
+        const [feedback, setFeedback] = React.useState("");
+        const [showAnswer, setShowAnswer] = React.useState(false);
+        const [score, setScore] = React.useState(0);
+
+        /**
+         * Returns a subset of the Mnemonica stack based on current deck size setting
+         * @returns {Array<{card: string, position: number}>} Sliced deck array
+         */
+        const getDeckSlice = () => {
+          // Simple slice based on numeric value
+          return MNEMONICA_STACK.slice(0, parseInt(deckSize));
+        };
+
+        /**
+         * Generates a new random card from the current deck slice and resets game state
+         * Called when starting a new round or clicking "New Card"
+         */
+        const generateNewCard = () => {
+          const deck = getDeckSlice();
+          const randomIndex = Math.floor(Math.random() * deck.length);
+          setCurrentCard(deck[randomIndex]);
+          setUserInput("");
+          setFeedback("");
+          setShowAnswer(false);
+          setHasChecked(false); // Reset the checked state
+        };
+
+        /**
+         * Validates user's answer and updates game state accordingly
+         * Only allows one check per card to prevent score manipulation
+         */
+        const checkAnswer = () => {
+          if (!currentCard || hasChecked) return;
+
+          const isCorrect =
+            mode === "cardToPosition"
+              ? parseInt(userInput) === currentCard.position
+              : userInput.toLowerCase() === currentCard.card.toLowerCase();
+
+          setFeedback(isCorrect ? "Correct!" : "Wrong. Try again!");
+          setShowAnswer(true);
+          setHasChecked(true); // Set the checked state
+
+          // Add animation class to card display when correct
+          const cardElement = document.querySelector(".card-display");
+          if (isCorrect && cardElement) {
+            cardElement.classList.add("correct");
+            setTimeout(() => {
+              cardElement.classList.remove("correct");
+            }, 500);
+          }
+
+          if (isCorrect) {
+            setCorrectScore(correctScore + 1);
+          } else {
+            setIncorrectScore(incorrectScore + 1);
+          }
+        };
+
+        /**
+         * Handles Enter key press in the input field
+         * @param {KeyboardEvent} e - The keyboard event
+         */
+        const handleKeyPress = (e) => {
+          if (e.key === "Enter" && currentCard && userInput) {
+            checkAnswer();
+          }
+        };
+
+        /**
+         * Extracts the suit symbol from a card string
+         * @param {Object} card - Card object containing card string
+         * @returns {string} The suit symbol (♥, ♦, ♠, ♣)
+         */
+        const getSuit = (card) => {
+          if (!card) return "";
+          return card.card.slice(-1);
+        };
+
+        // Render component
+        return (
+          <div className="container">
+            {/* Add scoreboard at the top */}
+            <div className="scoreboard">
+              <div className="score-item">
+                <div className="score-value correct-score">{correctScore}</div>
+                <div className="score-label">Correct</div>
+              </div>
+              <div className="score-item">
+                <div className="score-value incorrect-score">
+                  {incorrectScore}
+                </div>
+                <div className="score-label">Incorrect</div>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: "1rem", marginBottom: "2rem" }}>
+              <select
+                value={mode}
+                onChange={(e) => setMode(e.target.value)}
+                className="select-control"
+                style={{ flex: 1 }}
+              >
+                <option value="cardToPosition">Card → Position</option>
+                <option value="positionToCard">Position → Card</option>
+              </select>
+
+              <select
+                value={deckSize}
+                onChange={(e) => setDeckSize(e.target.value)}
+                className="select-control"
+                style={{ flex: 1 }}
+              >
+                <option value="10">First 10 Cards</option>
+                <option value="20">First 20 Cards</option>
+                <option value="30">First 30 Cards</option>
+                <option value="40">First 40 Cards</option>
+                <option value="52">Full Deck</option>
+              </select>
+            </div>
+
+            {currentCard ? (
+              <div style={{ textAlign: "center" }}>
+                <div className="card-display" data-suit={getSuit(currentCard)}>
+                  {mode === "cardToPosition"
+                    ? currentCard.card
+                    : currentCard.position}
+                </div>
+                <input
+                  type="text"
+                  value={userInput}
+                  onChange={(e) => setUserInput(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder={
+                    mode === "cardToPosition"
+                      ? "Enter position (1-52)"
+                      : "Enter card (e.g., A♠)"
+                  }
+                  className="input-field"
+                />
+                {showAnswer && (
+                  <div className="feedback">
+                    Answer:{" "}
+                    {mode === "cardToPosition"
+                      ? currentCard.position
+                      : currentCard.card}
+                  </div>
+                )}
+                {feedback && (
+                  <div
+                    className={`feedback ${
+                      feedback.includes("Correct")
+                        ? "feedback-correct"
+                        : "feedback-incorrect"
+                    }`}
+                  >
+                    {feedback}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div
+                style={{
+                  textAlign: "center",
+                  color: "var(--text-secondary)",
+                  padding: "2rem",
+                }}
+              >
+                Click "New Card" to start
+              </div>
+            )}
+
+            <div style={{ display: "flex", gap: "1rem", marginTop: "2rem" }}>
+              <button
+                onClick={generateNewCard}
+                className="btn btn-primary"
+                style={{ flex: 1 }}
+              >
+                New Card
+              </button>
+              <button
+                onClick={checkAnswer}
+                className="btn btn-success"
+                disabled={!currentCard || !userInput || hasChecked}
+                style={{
+                  flex: 1,
+                  opacity: currentCard && userInput && !hasChecked ? 1 : 0.5,
+                  cursor:
+                    currentCard && userInput && !hasChecked
+                      ? "pointer"
+                      : "not-allowed",
+                }}
+              >
+                Check
+              </button>
+            </div>
+            <div style={{ textAlign: "center", marginTop: "1rem" }}>
+              Score: {score}
+            </div>
+          </div>
+        );
+      }
+
+      // Initialize React application
+      const root = ReactDOM.createRoot(document.getElementById("root"));
+      root.render(<App />);
+    </script>
+  </body>
+</html>
