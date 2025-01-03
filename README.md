@@ -1,6 +1,6 @@
 # Mnemonica Stack Trainer
 
-An interactive web application to help magicians learn and practice Juan Tamariz's Mnemonica stack order. This trainer allows users to practice memorizing both card positions and cards at specific positions.
+An interactive web application to help learn and practice Juan Tamariz's Mnemonica stack order with a deck of playinf cards. This trainer allows users to practice memorizing both card positions and cards at specific positions.
 
 ## Features
 
@@ -40,6 +40,7 @@ Position | Card   Position | Card   Position | Card   Position | Card
 ```
 
 Some notable properties of the stack:
+
 - Contains built-in Si Stebbins sequences
 - Multiple "Stay Stack" sequences
 - Natural-looking random order
@@ -47,25 +48,6 @@ Some notable properties of the stack:
 - Built-in mathematical properties for various effects
 
 This trainer helps you memorize the stack position by position, allowing you to practice with smaller segments before attempting the full deck.
-
-## Quick Start
-
-The application is built with vanilla HTML, CSS, and React (via CDN), so it's very easy to run locally:
-
-1. Clone the repository:
-
-```bash
-git clone https://github.com/yourusername/mnemonica-stack-trainer.git
-cd mnemonica-stack-trainer
-```
-
-2. Serve the files using any local server. For example:
-
-   - Using Python 3: `python -m http.server 8000`
-   - Using Node.js's `serve`: `npx serve`
-   - Using PHP: `php -S localhost:8000`
-
-3. Open your browser and navigate to `http://localhost:8000`
 
 ## Demo site
 
